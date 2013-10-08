@@ -1,6 +1,7 @@
 fs = require('fs')
 path = require('path')
 http = require('http')
+url = require('url');
 
 folder = process.argv[2] || "C:\\node\\filemonitor\\test"
 
@@ -14,6 +15,7 @@ cb = ->
 		names.forEach (file) ->		
 			fs.stat file, (err, stat) ->
 				o =
+					file: file
 					path: path.relative(folder, file)
 					mtime: stat.mtime
 				c.push o			
@@ -21,6 +23,12 @@ cb = ->
 setInterval cb, 5000
 
 svc = http.createServer (req,res) ->
-	res.end JSON.stringify(c)
+	p = url.parse req.url, true
+	t = p.query.term
+	x = c
+	if t
+		x = x.filter (e) ->
+			return e.file.indexOf(t) >= 0
+	res.end JSON.stringify(x)
 
 svc.listen(port)
